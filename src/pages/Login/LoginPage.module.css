@@ -1,0 +1,67 @@
+.page {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+.loginCard {
+    width: min(420px, 100%);
+}
+
+.logo {
+    display: inline-block;
+    color: #a78bfa;
+    font-size: 20px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.heading {
+    margin-top: 30px;
+}
+
+.heading h1 {
+    margin: 0;
+    font-size: 28px;
+}
+
+.heading p {
+    margin: 10px 0 0;
+    color: var(--color-text-secondary);
+}
+
+.form {
+    display: grid;
+    gap: 18px;
+    margin-top: 30px;
+}
+
+.footer {
+    margin: 24px 0 0;
+    text-align: center;
+    color: var(--color-text-secondary);
+}
+
+.signupLink {
+    color: #a78bfa;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.signupLink:hover {
+    text-decoration: underline;
+}
+
+.error {
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px solid rgb(239 68 68 / 35%);
+    border-radius: var(--radius-md);
+    background: rgb(239 68 68 / 10%);
+    color: #fca5a5;
+    font-size: 13px;
+    line-height: 1.5;
+}

@@ -1,0 +1,215 @@
+.sidebar {
+    position: relative;
+    z-index: 30;
+    display: flex;
+    width: 280px;
+    min-width: 280px;
+    height: 100%;
+    flex-direction: column;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    background: #141419;
+    color: #ffffff;
+}
+
+.brandArea {
+    display: flex;
+    min-height: 68px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.brandMark {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+    border-radius: 10px;
+    background: linear-gradient(
+            135deg,
+            #9f8cff,
+            #6758d8
+    );
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.brandName {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.mobileCloseButton {
+    display: none;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: #b7b7c0;
+    cursor: pointer;
+}
+
+.mobileCloseButton:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+}
+
+.newChatButton {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 4px 14px 18px;
+    padding: 10px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 11px;
+    background: #232229;
+    color: #ffffff;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+            background-color 160ms ease,
+            border-color 160ms ease;
+}
+
+.newChatButton:hover {
+    border-color: rgba(159, 140, 255, 0.5);
+    background: #2b2935;
+}
+
+.newChatButton:focus-visible,
+.mobileCloseButton:focus-visible {
+    outline: 2px solid #8b7cff;
+    outline-offset: 2px;
+}
+
+.section {
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 12px 16px;
+}
+
+.sectionTitle {
+    margin: 0 0 8px;
+    padding: 0 10px;
+    color: #7f7f8b;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.conversationList {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.emptyMessage {
+    margin: 18px 10px;
+    color: #777781;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.footer {
+    padding: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border-radius: 10px;
+}
+
+.avatar {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    place-items: center;
+    border-radius: 50%;
+    background: #303039;
+    color: #dcdce2;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.profileText {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.profileName {
+    overflow: hidden;
+    color: #e7e7eb;
+    font-size: 13px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profilePlan {
+    margin-top: 2px;
+    color: #81818c;
+    font-size: 11px;
+}
+
+.backdrop {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: min(86vw, 300px);
+        min-width: 0;
+        transform: translateX(-100%);
+        box-shadow: 12px 0 34px rgba(0, 0, 0, 0.32);
+        transition: transform 220ms ease;
+    }
+
+    .open {
+        transform: translateX(0);
+    }
+
+    .mobileCloseButton {
+        display: grid;
+    }
+
+    .backdrop {
+        position: fixed;
+        z-index: 20;
+        inset: 0;
+        display: block;
+        border: 0;
+        background: rgba(0, 0, 0, 0.48);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 220ms ease;
+    }
+
+    .backdropVisible {
+        opacity: 1;
+        pointer-events: auto;
+    }
+}

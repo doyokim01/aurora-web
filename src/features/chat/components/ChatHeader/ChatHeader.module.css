@@ -1,0 +1,60 @@
+.header {
+    display: flex;
+    min-height: 64px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(24, 24, 29, 0.88);
+    backdrop-filter: blur(16px);
+}
+
+.title {
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    color: #f5f5f7;
+    font-size: 15px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.menuButton,
+.placeholder {
+    position: absolute;
+    left: 14px;
+    display: none;
+    width: 40px;
+    height: 40px;
+}
+
+.menuButton {
+    place-items: center;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: #cacacf;
+    cursor: pointer;
+}
+
+.menuButton:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: #ffffff;
+}
+
+.menuButton:focus-visible {
+    outline: 2px solid #8b7cff;
+    outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+    .header {
+        position: relative;
+        padding: 0 64px;
+    }
+
+    .menuButton {
+        display: grid;
+    }
+}
