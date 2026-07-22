@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type {
     ConversationDetail,
     ConversationSummary,
+    Message
 } from "../types/conversation";
 
 interface ConversationState {
@@ -10,6 +11,9 @@ interface ConversationState {
     selectedConversation: ConversationDetail | null;
     isDetailLoading: boolean;
     detailError: string | null;
+    streamingMessage: string | null,
+    isStreaming: boolean;
+    setStreaming: (streaming: boolean) => void;
 
     setConversations: (
         items: ConversationSummary[],
@@ -30,6 +34,13 @@ interface ConversationState {
     setDetailError: (
         error: string | null,
     ) => void;
+
+    setStreamingMessage: (message: string) => void;
+    clearStreamingMessage: () => void;
+
+    appendMessage: (
+        message: Message,
+    ) => void;
 }
 
 export const useConversationStore =
@@ -39,6 +50,8 @@ export const useConversationStore =
         selectedConversation: null,
         isDetailLoading: false,
         detailError: null,
+        streamingMessage: null,
+        isStreaming: false,
 
         setConversations: (items) =>
             set({
@@ -63,5 +76,38 @@ export const useConversationStore =
         setDetailError: (error) =>
             set({
                 detailError: error,
+            }),
+
+        setStreamingMessage: (message) =>
+            set({
+                streamingMessage: message,
+            }),
+
+        clearStreamingMessage: () =>
+            set({
+                streamingMessage: null,
+            }),
+
+        appendMessage: (message) =>
+            set((state) => {
+
+                if (!state.selectedConversation) {
+                    return state;
+                }
+
+                return {
+                    selectedConversation: {
+                        ...state.selectedConversation,
+                        messages: [
+                            ...state.selectedConversation.messages,
+                            message,
+                        ],
+                    },
+                };
+            }),
+
+        setStreaming: (streaming) =>
+            set({
+                isStreaming: streaming,
             }),
     }));

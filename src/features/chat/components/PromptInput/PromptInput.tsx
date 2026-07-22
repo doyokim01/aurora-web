@@ -17,8 +17,10 @@ import styles from "./PromptInput.module.css";
 interface PromptInputProps {
     value: string;
     disabled?: boolean;
+    isStreaming?: boolean;
     onChange: (value: string) => void;
     onSubmit: (message: string) => void;
+    onStop?: () => void;
 }
 
 // ================================
@@ -40,8 +42,10 @@ const MAX_TEXTAREA_HEIGHT = 200;
 export default function PromptInput({
                                         value,
                                         disabled = false,
+                                        isStreaming = false,
                                         onChange,
                                         onSubmit,
+                                        onStop,
                                     }: PromptInputProps) {
     // ================================
     // Ref
@@ -150,12 +154,29 @@ export default function PromptInput({
                 />
 
                 <button
-                    type="submit"
+                    type={isStreaming ? "button" : "submit"}
                     className={styles.submitButton}
-                    disabled={!canSubmit}
-                    aria-label="메시지 전송"
+                    disabled={
+                        isStreaming
+                            ? false
+                            : !canSubmit
+                    }
+                    onClick={
+                        isStreaming
+                            ? onStop
+                            : undefined
+                    }
+                    aria-label={
+                        isStreaming
+                            ? "응답 중지"
+                            : "메시지 전송"
+                    }
                 >
-                    <SendIcon />
+                    {isStreaming ? (
+                        <StopIcon />
+                    ) : (
+                        <SendIcon />
+                    )}
                 </button>
             </form>
 
@@ -186,6 +207,27 @@ function SendIcon() {
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+            />
+        </svg>
+    );
+}
+
+function StopIcon() {
+    return (
+        <svg
+            width="19"
+            height="19"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+        >
+            <rect
+                x="7"
+                y="7"
+                width="10"
+                height="10"
+                rx="1.5"
+                fill="currentColor"
             />
         </svg>
     );

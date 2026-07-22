@@ -2,7 +2,7 @@
 // Import
 // ================================
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import ChatHeader from "../ChatHeader/ChatHeader";
 import EmptyState from "../EmptyState/EmptyState";
 import PromptInput from "../PromptInput/PromptInput";
@@ -60,6 +60,34 @@ export default function ChatLayout() {
         (state) => state.selectConversation
     );
 
+    const setStreamingMessage = useConversationStore(
+        (state) => state.setStreamingMessage
+    );
+
+    const clearStreamingMessage = useConversationStore(
+        (state) => state.clearStreamingMessage
+    );
+
+
+    const streamingMessage = useConversationStore(
+        (state) => state.streamingMessage
+    );
+
+    const setSelectedConversation = useConversationStore(
+        (state) => state.setSelectedConversation,
+    );
+
+    const appendMessage = useConversationStore(
+        (state) => state.appendMessage,
+    );
+
+    const isStreaming = useConversationStore(
+        (state) => state.isStreaming,
+    );
+
+    const setStreaming = useConversationStore(
+        (state) => state.setStreaming,
+    );
 
     const [prompt, setPrompt] = useState("");
 
@@ -72,6 +100,8 @@ export default function ChatLayout() {
     const conversations = useConversationStore(
         (state) => state.conversations
     );
+
+    const timerRef = useRef<number | null>(null);
 
     // ================================
     // Derived State
@@ -131,6 +161,30 @@ export default function ChatLayout() {
         selectConversation(conversationId);
     };
 
+    const currentStreamingMessage =
+        useConversationStore.getState().streamingMessage;
+
+
+    const handleStopStreaming = () => {
+        if (timerRef.current !== null) {
+            window.clearInterval(timerRef.current);
+            timerRef.current = null;
+        }
+
+
+        if (currentStreamingMessage) {
+            appendMessage({
+                id: Date.now(),
+                role: "ASSISTANT",
+                content: currentStreamingMessage,
+                createdAt: new Date().toISOString(),
+            });
+        }
+
+        clearStreamingMessage();
+        setStreaming(false);
+    };
+
     /**
      * 입력한 메시지를 채팅 전송 흐름으로 전달합니다.
      *
@@ -138,12 +192,56 @@ export default function ChatLayout() {
      * 연결합니다.
      */
     const handleSubmitPrompt = (message: string) => {
-        console.info(
-            "[Aurora] Chat message submitted:",
-            message,
-        );
-
         setPrompt("");
+        clearStreamingMessage();
+        setStreaming(true);
+
+        const now = new Date().toISOString();
+
+        if (!selectedConversation) {
+            setSelectedConversation({
+                id: -1,
+                title: message,
+                messages: [],
+            });
+        }
+
+        appendMessage({
+            id: Date.now(),
+            role: "USER",
+            content: message,
+            createdAt: now,
+        });
+
+        const response =
+            `안녕하세요.\n\n"${message}"에 대한 Mock Streaming 응답입니다.`;
+
+        let index = 0;
+
+        timerRef.current = window.setInterval(() => {
+            index += 1;
+
+            setStreamingMessage(
+                response.slice(0, index),
+            );
+
+            if (index >= response.length) {
+                if (timerRef.current !== null) {
+                    window.clearInterval(timerRef.current);
+                    timerRef.current = null;
+                }
+
+                appendMessage({
+                    id: Date.now() + 1,
+                    role: "ASSISTANT",
+                    content: response,
+                    createdAt: new Date().toISOString(),
+                });
+
+                clearStreamingMessage();
+                setStreaming(false);
+            }
+        }, 30);
     };
 
     // ================================
@@ -178,9 +276,15 @@ export default function ChatLayout() {
                         <p>대화를 불러오는 중입니다.</p>
                     ) : detailError ? (
                         <p>{detailError}</p>
-                    ) : selectedConversation ? (
+                    ) : selectedConversation || streamingMessage ? (
                         <MessageList
-                            conversation={selectedConversation}
+                            conversation={
+                                selectedConversation ?? {
+                                    id: -1,
+                                    title: "새 대화",
+                                    messages: [],
+                                }
+                            }
                         />
                     ) : (
                         <EmptyState />
@@ -189,8 +293,10 @@ export default function ChatLayout() {
 
                 <PromptInput
                     value={prompt}
+                    isStreaming={isStreaming}
                     onChange={setPrompt}
                     onSubmit={handleSubmitPrompt}
+                    onStop={handleStopStreaming}
                 />
             </main>
         </div>

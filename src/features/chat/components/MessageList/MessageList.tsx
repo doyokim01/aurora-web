@@ -1,5 +1,8 @@
-import type {ConversationDetail,} from "../../../conversation/types/conversation";
+import { useEffect, useRef } from "react";
+
+import type { ConversationDetail } from "../../../conversation/types/conversation";
 import { MessageBubble } from "../MessageBubble/MessageBubble";
+import { useConversationStore } from "../../../conversation/store/conversationStore";
 import styles from "./MessageList.module.scss";
 
 interface MessageListProps {
@@ -9,6 +12,20 @@ interface MessageListProps {
 export function MessageList({
                                 conversation,
                             }: MessageListProps) {
+
+    const bottomRef = useRef<HTMLDivElement>(null);
+
+    const streamingMessage = useConversationStore(
+        (state) => state.streamingMessage
+    );
+
+    useEffect(() => {
+        bottomRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "end",
+        });
+    }, [conversation.messages]);
+
     return (
         <div className={styles.list}>
             {conversation.messages.map((message) => (
@@ -17,6 +34,17 @@ export function MessageList({
                     message={message}
                 />
             ))}
+            {streamingMessage && (
+                <MessageBubble
+                    message={{
+                        id: -1,
+                        role: "ASSISTANT",
+                        content: streamingMessage,
+                        createdAt: new Date().toISOString(),
+                    }}
+                />
+            )}
+            <div ref={bottomRef} />
         </div>
     );
 }
