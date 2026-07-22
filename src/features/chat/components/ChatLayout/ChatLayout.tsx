@@ -3,13 +3,14 @@
 // ================================
 
 import { useMemo, useState, useRef } from "react";
+import { streamChat } from "../../api/chatStream";
 import ChatHeader from "../ChatHeader/ChatHeader";
 import EmptyState from "../EmptyState/EmptyState";
 import PromptInput from "../PromptInput/PromptInput";
 import Sidebar from "../../../conversation/components/sidebar/Sidebar.tsx";
 import { useConversation } from "../../../conversation/hooks/useConversation";
 import { useConversationStore } from "../../../conversation/store/conversationStore";
-import { useConversationDetail } from "../../../conversation/hooks/useConversationDetail";
+import { useAuthStore } from "@/features/auth/store/authStore";
 
 import styles from "./ChatLayout.module.css";
 import {MessageList} from "@/features/chat/components/MessageList/MessageList.tsx";
@@ -26,8 +27,8 @@ import {MessageList} from "@/features/chat/components/MessageList/MessageList.ts
  */
 export default function ChatLayout() {
 
-    useConversation();
-    useConversationDetail();
+    const { loadConversations } =
+        useConversation();
 
     const selectedConversation =
         useConversationStore(
@@ -73,10 +74,6 @@ export default function ChatLayout() {
         (state) => state.streamingMessage
     );
 
-    const setSelectedConversation = useConversationStore(
-        (state) => state.setSelectedConversation,
-    );
-
     const appendMessage = useConversationStore(
         (state) => state.appendMessage,
     );
@@ -100,8 +97,12 @@ export default function ChatLayout() {
     const conversations = useConversationStore(
         (state) => state.conversations
     );
+    const accessToken = useAuthStore(
+        (state) => state.accessToken,
+    );
 
-    const timerRef = useRef<number | null>(null);
+    const abortControllerRef =
+        useRef<AbortController | null>(null);
 
     // ================================
     // Derived State
@@ -161,16 +162,13 @@ export default function ChatLayout() {
         selectConversation(conversationId);
     };
 
-    const currentStreamingMessage =
-        useConversationStore.getState().streamingMessage;
-
-
     const handleStopStreaming = () => {
-        if (timerRef.current !== null) {
-            window.clearInterval(timerRef.current);
-            timerRef.current = null;
-        }
+        abortControllerRef.current?.abort();
+        abortControllerRef.current = null;
 
+        const currentStreamingMessage =
+            useConversationStore.getState()
+                .streamingMessage;
 
         if (currentStreamingMessage) {
             appendMessage({
@@ -191,20 +189,21 @@ export default function ChatLayout() {
      * 다음 단계에서 이 지점에 SSE 기반 메시지 전송 로직을
      * 연결합니다.
      */
-    const handleSubmitPrompt = (message: string) => {
+    const handleSubmitPrompt = async (
+        message: string,
+    ) => {
+
+        if (!accessToken) {
+            console.error("[Aurora] Access token is missing.");
+            setStreaming(false);
+            return;
+        }
+
         setPrompt("");
         clearStreamingMessage();
         setStreaming(true);
 
         const now = new Date().toISOString();
-
-        if (!selectedConversation) {
-            setSelectedConversation({
-                id: -1,
-                title: message,
-                messages: [],
-            });
-        }
 
         appendMessage({
             id: Date.now(),
@@ -213,35 +212,67 @@ export default function ChatLayout() {
             createdAt: now,
         });
 
-        const response =
-            `안녕하세요.\n\n"${message}"에 대한 Mock Streaming 응답입니다.`;
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
 
-        let index = 0;
+        let fullResponse = "";
 
-        timerRef.current = window.setInterval(() => {
-            index += 1;
+        try {
+            await streamChat({
+                conversationId: activeConversationId ,
+                message,
+                accessToken,
+                signal: controller.signal,
 
-            setStreamingMessage(
-                response.slice(0, index),
+                onConversation: async (newConversationId) => {
+                    selectConversation(newConversationId);
+                    await loadConversations();
+                },
+
+                onChunk: (chunk) => {
+                    fullResponse += chunk;
+                    setStreamingMessage(fullResponse);
+                },
+
+                onDone: () => {
+                    if (fullResponse) {
+                        appendMessage({
+                            id: Date.now() + 1,
+                            role: "ASSISTANT",
+                            content: fullResponse,
+                            createdAt:
+                                new Date().toISOString(),
+                        });
+                    }
+
+                    clearStreamingMessage();
+                    setStreaming(false);
+                    abortControllerRef.current = null;
+
+                    /*
+                     * 새 대화 및 AI 생성 제목을
+                     * Sidebar에 최종 반영합니다.
+                     */
+                    void loadConversations();
+                },
+            });
+        } catch (error) {
+            if (
+                error instanceof DOMException &&
+                error.name === "AbortError"
+            ) {
+                return;
+            }
+
+            console.error(
+                "[Aurora] Streaming failed:",
+                error,
             );
 
-            if (index >= response.length) {
-                if (timerRef.current !== null) {
-                    window.clearInterval(timerRef.current);
-                    timerRef.current = null;
-                }
-
-                appendMessage({
-                    id: Date.now() + 1,
-                    role: "ASSISTANT",
-                    content: response,
-                    createdAt: new Date().toISOString(),
-                });
-
-                clearStreamingMessage();
-                setStreaming(false);
-            }
-        }, 30);
+            clearStreamingMessage();
+            setStreaming(false);
+            abortControllerRef.current = null;
+        }
     };
 
     // ================================

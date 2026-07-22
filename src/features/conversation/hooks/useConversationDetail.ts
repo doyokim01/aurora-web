@@ -1,44 +1,34 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { getConversation } from "../api/conversationApi";
 import { useConversationStore } from "../store/conversationStore";
 
-/**
- * 선택된 대화의 상세 정보와 메시지를 조회합니다.
- */
 export function useConversationDetail() {
     const selectedId = useConversationStore(
         (state) => state.selectedId,
     );
 
-    const setSelectedConversation =
-        useConversationStore(
-            (state) =>
-                state.setSelectedConversation,
-        );
+    const setSelectedConversation = useConversationStore(
+        (state) => state.setSelectedConversation,
+    );
 
-    const setDetailLoading =
-        useConversationStore(
-            (state) => state.setDetailLoading,
-        );
+    const setDetailLoading = useConversationStore(
+        (state) => state.setDetailLoading,
+    );
 
-    const setDetailError =
-        useConversationStore(
-            (state) => state.setDetailError,
-        );
+    const setDetailError = useConversationStore(
+        (state) => state.setDetailError,
+    );
 
-    useEffect(() => {
-        if (selectedId === null) {
-            setSelectedConversation(null);
-            return;
-        }
+    const loadConversationDetail = useCallback(
+        async (conversationId: number) => {
+            setDetailLoading(true);
+            setDetailError(null);
 
-        const loadConversation = async () => {
             try {
-                setDetailLoading(true);
-                setDetailError(null);
-
                 const conversation =
-                    await getConversation(selectedId);
+                    await getConversation(
+                        conversationId,
+                    );
 
                 setSelectedConversation(conversation);
             } catch (error) {
@@ -47,20 +37,34 @@ export function useConversationDetail() {
                     error,
                 );
 
-                setSelectedConversation(null);
                 setDetailError(
                     "대화를 불러오지 못했습니다.",
                 );
             } finally {
                 setDetailLoading(false);
             }
-        };
+        },
+        [
+            setSelectedConversation,
+            setDetailLoading,
+            setDetailError,
+        ],
+    );
 
-        void loadConversation();
+    useEffect(() => {
+        if (selectedId === null) {
+            setSelectedConversation(null);
+            return;
+        }
+
+        void loadConversationDetail(selectedId);
     }, [
         selectedId,
+        loadConversationDetail,
         setSelectedConversation,
-        setDetailLoading,
-        setDetailError,
     ]);
+
+    return {
+        loadConversationDetail,
+    };
 }

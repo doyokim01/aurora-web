@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { getConversations } from "../api/conversationApi";
 import { useConversationStore } from "../store/conversationStore";
 
@@ -10,21 +10,43 @@ export function useConversation() {
         (state) => state.setConversations,
     );
 
-    useEffect(() => {
-        const loadConversations = async () => {
-            try {
-                const conversations =
-                    await getConversations();
+    const loadConversations = useCallback(async () => {
+        try {
+            const conversations =
+                await getConversations();
 
-                setConversations(conversations);
-            } catch (error) {
-                console.error(
-                    "[Aurora] Failed to load conversations.",
-                    error,
+            setConversations(conversations);
+
+            const {
+                selectedId,
+                selectConversation,
+            } = useConversationStore.getState();
+
+            /*
+             * 새로고침으로 선택 상태가 초기화된 경우
+             * 가장 최근 대화를 자동으로 선택합니다.
+             */
+            if (
+                selectedId === null &&
+                conversations.length > 0
+            ) {
+                selectConversation(
+                    conversations[0].id,
                 );
             }
-        };
-
-        void loadConversations();
+        } catch (error) {
+            console.error(
+                "[Aurora] Failed to load conversations.",
+                error,
+            );
+        }
     }, [setConversations]);
+
+    useEffect(() => {
+        void loadConversations();
+    }, [loadConversations]);
+
+    return {
+        loadConversations,
+    };
 }
